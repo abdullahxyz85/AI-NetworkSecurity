@@ -41,6 +41,7 @@ st.markdown("""
 st.title("📡 **Network Anomaly Detection & Congestion Prediction** 🔍")
 st.write("Upload your network traffic data to detect anomalies and predict congestion patterns. 🚨📊")
 
+
 # Sidebar for Navigation
 st.sidebar.header("📑 **Navigation Panel**")
 st.sidebar.markdown("""
@@ -48,8 +49,7 @@ st.sidebar.markdown("""
     - **Step 2**: Run **Anomaly Detection** to identify unusual patterns.
     - **Step 3**: Predict **Network Congestion** for traffic analysis.
 """)
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/4/46/Network-icon.svg", width=100)
-
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/1041/1041916.png", width=100)
 
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
