@@ -61,6 +61,7 @@ def detect_anomalies(df_scaled):
 
     return anomaly_count, normal_count
 
+
 # Function to visualize anomaly detection results
 def plot_anomalies(anomalies, normal_records):
     categories = ["Anomalies", "Normal Records"]
