@@ -53,47 +53,47 @@ st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Netw
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
 
-# Load Data
+# Load data function
 @st.cache_data
 def load_data(uploaded_file):
-    # Load the data using pandas for now (instead of Dask)
     df = pd.read_csv(uploaded_file)
     return df
 
 # Preprocess data
 @st.cache_data
 def preprocess_data(df):
-    # Convert 'Time' to datetime and extract the hour
     df['Time'] = pd.to_datetime(df['Time'], unit='s')
     df['Hour'] = df['Time'].dt.hour
-    
-    # Encode 'Protocol' column
     label_encoder = LabelEncoder()
     df['Protocol_Encoded'] = label_encoder.fit_transform(df['Protocol'])
-    
-    # Select features for scaling
     features = ['Length', 'Protocol_Encoded', 'Hour', 'No.']
     scaler = StandardScaler()
     df_scaled = scaler.fit_transform(df[features])
-    
     return df, df_scaled
 
-# Anomaly Detection using Isolation Forest
-@st.cache_resource
+# Anomaly Detection function
+@st.cache_data
 def detect_anomalies(df, df_scaled):
-    # Using Isolation Forest to detect anomalies
     model = IsolationForest(contamination=0.1, random_state=42)
     df['Anomaly'] = model.fit_predict(df_scaled)
     df['Anomaly'] = df['Anomaly'].map({1: 'Normal', -1: 'Anomaly'})
     return df
 
-# Congestion Prediction using Isolation Forest (for model training and testing)
+# Display results with improved UI
+def display_results(df):
+    st.write("### 🚨 **Anomaly Detection Results** 🚨")
+    st.write(df.head()) 
+    anomaly_count = df['Anomaly'].value_counts()
+    st.write("🛑 **Total Anomalies Detected**:", anomaly_count.get('Anomaly', 0))
+    st.write("✅ **Total Normal Records**:", anomaly_count.get('Normal', 0))
+    st.bar_chart(df['Anomaly'].value_counts(), use_container_width=True)
+
+# Congestion Prediction function
 def congestion_prediction(df_scaled, df):
-    # Ensure 'Anomaly' column is added before proceeding
     if 'Anomaly' not in df.columns:
         st.error("Anomaly column is missing. Please run anomaly detection first.")
         return
-    
+
     X_train, X_test, y_train, y_test = train_test_split(df_scaled, df['Anomaly'], test_size=0.2, random_state=42)
     model = IsolationForest(contamination=0.05, random_state=42)
     model.fit(X_train)
@@ -101,30 +101,30 @@ def congestion_prediction(df_scaled, df):
     y_pred = np.where(y_pred == 1, "Normal", "Congested")
     
     st.subheader("📈 **Congestion Prediction Results** 📉")
-    st.write("📊 **Confusion Matrix**: ")
+    st.write("📊 **Confusion Matrix**:")
     st.write(confusion_matrix(y_test, y_pred))
     st.text(classification_report(y_test, y_pred))
     
     congestion_fig = px.pie(names=['Normal', 'Congested'], values=[np.sum(y_pred == 'Normal'), np.sum(y_pred == 'Congested')], title="🚦 Traffic Congestion Distribution 🌐")
     st.plotly_chart(congestion_fig, use_container_width=True)
 
+# Main Execution
 if uploaded_file:
     df = load_data(uploaded_file)
     st.subheader("🔍 **Preview of Uploaded Data**")
     st.dataframe(df.head())
 
-    # Preprocess the data
     df, df_scaled = preprocess_data(df)
     
-    # Anomaly Detection
+    # Session state to store the 'Anomaly' column after anomaly detection
     if st.button("🚨 **Run Anomaly Detection** 🚨"):
         df = detect_anomalies(df, df_scaled)
-        st.subheader("🚀 **Anomaly Detection Results** 🚀")
-        st.write(f"**Total Anomalies Detected:** {df[df['Anomaly'] == 'Anomaly'].shape[0]} 🛑")
-        
-        fig = px.histogram(df, x='Protocol', color='Anomaly', title="📊 **Anomalies by Protocol**", barmode='group')
-        st.plotly_chart(fig, use_container_width=True)
+        st.session_state.df = df  # Save df to session state
+        display_results(df)
     
-    # Predict Congestion
     if st.button("📊 **Predict Network Congestion** 📉"):
-        congestion_prediction(df_scaled, df)
+        # Ensure Anomaly column is available in the session state
+        if 'df' in st.session_state and 'Anomaly' in st.session_state.df.columns:
+            congestion_prediction(df_scaled, st.session_state.df)
+        else:
+            st.error("Anomaly column is missing. Please run anomaly detection first.")
