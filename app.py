@@ -1,19 +1,15 @@
 import streamlit as st
 import pandas as pd
-import dask.dataframe as dd
+import numpy as np
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
 
-# Use Dask for faster file loading
-@st.cache
 def load_data(uploaded_file):
-    # Load the data using Dask for faster performance
-    df = dd.read_csv(uploaded_file)
-    return df.compute()  # Convert Dask dataframe to Pandas for further processing
+    df = pd.read_csv(uploaded_file)
+    return df
 
-# Preprocess data
-@st.cache
 def preprocess_data(df):
     # Convert 'Time' to datetime and extract the hour
     df['Time'] = pd.to_datetime(df['Time'], unit='s')
@@ -30,8 +26,6 @@ def preprocess_data(df):
     
     return df, df_scaled
 
-# Detect anomalies using Isolation Forest
-@st.cache
 def detect_anomalies(df, df_scaled):
     # Using Isolation Forest to detect anomalies
     model = IsolationForest(contamination=0.1, random_state=42)
