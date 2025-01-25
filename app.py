@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import dask.dataframe as dd
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -55,12 +54,12 @@ st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Netw
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
 
-# Use Dask for faster file loading
+# Use Pandas for data loading
 @st.cache
 def load_data(uploaded_file):
-    # Load the data using Dask for faster performance
-    df = dd.read_csv(uploaded_file)
-    return df.compute()  # Convert Dask dataframe to Pandas for further processing
+    # Load the data using Pandas for performance
+    df = pd.read_csv(uploaded_file)
+    return df
 
 # Preprocess data
 @st.cache
