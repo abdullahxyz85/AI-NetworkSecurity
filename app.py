@@ -49,7 +49,7 @@ st.sidebar.markdown("""
     - **Step 2**: Run **Anomaly Detection** to identify unusual patterns.
     - **Step 3**: Predict **Network Congestion** for traffic analysis.
 """)
-st.sidebar.image("https://cdn3.iconfinder.com/data/icons/network-and-communication-8/32/network_connection-512.png", width=100)
+st.sidebar.image("https://cdn4.iconfinder.com/data/icons/technology-83/1000/technology_data_network-512.png", width=100)
 
 
 # File Uploader
