@@ -53,10 +53,10 @@ st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Netw
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
 
-# Use Pandas for file loading and processing
+# Load Data
 @st.cache_data
 def load_data(uploaded_file):
-    # Load the data using Pandas
+    # Load the data using pandas for now (instead of Dask)
     df = pd.read_csv(uploaded_file)
     return df
 
@@ -87,21 +87,13 @@ def detect_anomalies(df, df_scaled):
     df['Anomaly'] = df['Anomaly'].map({1: 'Normal', -1: 'Anomaly'})
     return df
 
-# Display results with improved UI
-def display_results(df):
-    st.write("### 🚨 **Anomaly Detection Results** 🚨")
-    st.write(df.head())  # Display first few rows of the dataframe
-    
-    # Count anomalies and normal records
-    anomaly_count = df['Anomaly'].value_counts()
-    st.write("🛑 **Total Anomalies Detected**:", anomaly_count.get('Anomaly', 0))
-    st.write("✅ **Total Normal Records**:", anomaly_count.get('Normal', 0))
-    
-    # Display a bar chart of anomaly counts
-    st.bar_chart(df['Anomaly'].value_counts(), use_container_width=True)
-
 # Congestion Prediction using Isolation Forest (for model training and testing)
 def congestion_prediction(df_scaled, df):
+    # Ensure 'Anomaly' column is added before proceeding
+    if 'Anomaly' not in df.columns:
+        st.error("Anomaly column is missing. Please run anomaly detection first.")
+        return
+    
     X_train, X_test, y_train, y_test = train_test_split(df_scaled, df['Anomaly'], test_size=0.2, random_state=42)
     model = IsolationForest(contamination=0.05, random_state=42)
     model.fit(X_train)
