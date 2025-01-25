@@ -10,6 +10,7 @@ from sklearn.ensemble import IsolationForest
 # Set Streamlit Page Configurations
 st.set_page_config(page_title="AI Network Security", layout="wide", page_icon="🛡️")
 
+
 # Custom Styling
 st.markdown("""
     <style>
@@ -60,7 +61,6 @@ def detect_anomalies(df_scaled):
     st.markdown(f"✅ **Total Normal Records:** <span style='color:green;font-size:22px;font-weight:bold'>{normal_count}</span>", unsafe_allow_html=True)
 
     return anomaly_count, normal_count
-
 
 # Function to visualize anomaly detection results
 def plot_anomalies(anomalies, normal_records):
