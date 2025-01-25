@@ -10,7 +10,6 @@ from sklearn.ensemble import IsolationForest
 # Set Streamlit Page Configurations
 st.set_page_config(page_title="AI Network Security", layout="wide", page_icon="🛡️")
 
-
 # Custom Styling
 st.markdown("""
     <style>
