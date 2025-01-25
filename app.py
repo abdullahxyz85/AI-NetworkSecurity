@@ -1,130 +1,125 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.ensemble import IsolationForest
 
-# Streamlit Page Configuration
-st.set_page_config(page_title="Network Anomaly Detection & Congestion Prediction", page_icon="📡", layout="wide")
+# Set Streamlit Page Configurations
+st.set_page_config(page_title="AI Network Security", layout="wide", page_icon="🛡️")
 
-# Custom Styling for UI Enhancements
+# Custom Styling
 st.markdown("""
     <style>
-        .reportview-container { background: #f5f7fa; }
-        .css-1d391kg { padding: 2rem; }
-        h1 { color: #333366; font-size: 3rem; text-align: center; font-weight: bold; }
-        h2 { color: #1E3A8A; font-size: 2rem; font-weight: bold; }
-        .stButton button { 
-            background-color: #4CAF50; 
-            color: white; 
-            font-size: 16px; 
-            padding: 10px 20px;
-            border-radius: 10px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .stButton button:hover { 
-            background-color: #45a049; 
-            transform: scale(1.05); 
-            transition: all 0.3s ease-in-out;
-        }
-        .sidebar .sidebar-content { background-color: #1E3A8A; color: white; padding: 20px; }
-        .stSelectbox div, .stTextInput div { margin-bottom: 20px; }
-        .stAlert { background-color: #f8d7da; color: #721c24; border-radius: 10px; padding: 10px; }
-        .stBarChart { margin-top: 20px; }
+        .big-font { font-size:24px !important; font-weight: bold; }
+        .stButton>button { background-color: #ff4b4b; color: white; font-size:18px; }
+        .stNumberInput>div>input { font-size: 18px; }
     </style>
 """, unsafe_allow_html=True)
 
-# App Title
-st.title("📡 **Network Anomaly Detection & Congestion Prediction** 🔍")
-st.write("Upload your network traffic data to detect anomalies and predict congestion patterns. 🚨📊")
+# Sidebar - Upload Data
+st.sidebar.header("📂 Upload Your CSV File")
+uploaded_file = st.sidebar.file_uploader("Upload a dataset (CSV format)", type=["csv"])
 
-# Sidebar for Navigation
-st.sidebar.header("📑 **Navigation Panel**")
-st.sidebar.markdown("""
-    - **Step 1**: Upload your network traffic data.
-    - **Step 2**: Run **Anomaly Detection** to identify unusual patterns.
-    - **Step 3**: Predict **Network Congestion** for traffic analysis.
-""")
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Network-icon.svg/1200px-Network-icon.svg.png", width=100)
+# Global variables
+df = None
+df_scaled = None
+anomaly_model = None
+anomaly_detected = False  # Track if anomalies are detected
 
-# File Uploader
-uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
-
-# Load data function
-@st.cache_data
-def load_data(uploaded_file):
-    df = pd.read_csv(uploaded_file)
-    return df
-
-# Preprocess data
-@st.cache_data
-def preprocess_data(df):
-    df['Time'] = pd.to_datetime(df['Time'], unit='s')
-    df['Hour'] = df['Time'].dt.hour
-    label_encoder = LabelEncoder()
-    df['Protocol_Encoded'] = label_encoder.fit_transform(df['Protocol'])
-    features = ['Length', 'Protocol_Encoded', 'Hour', 'No.']
-    scaler = StandardScaler()
-    df_scaled = scaler.fit_transform(df[features])
-    return df, df_scaled
-
-# Anomaly Detection function
-@st.cache_data
-def detect_anomalies(df, df_scaled):
-    model = IsolationForest(contamination=0.1, random_state=42)
-    df['Anomaly'] = model.fit_predict(df_scaled)
-    df['Anomaly'] = df['Anomaly'].map({1: 'Normal', -1: 'Anomaly'})
-    return df
-
-# Display results with improved UI
-def display_results(df):
-    st.write("### 🚨 **Anomaly Detection Results** 🚨")
-    st.write(df.head()) 
-    anomaly_count = df['Anomaly'].value_counts()
-    st.write("🛑 **Total Anomalies Detected**:", anomaly_count.get('Anomaly', 0))
-    st.write("✅ **Total Normal Records**:", anomaly_count.get('Normal', 0))
-    st.bar_chart(df['Anomaly'].value_counts(), use_container_width=True)
-
-# Congestion Prediction function
-def congestion_prediction(df_scaled, df):
-    if 'Anomaly' not in df.columns:
-        st.error("Anomaly column is missing. Please run anomaly detection first.")
-        return
-
-    X_train, X_test, y_train, y_test = train_test_split(df_scaled, df['Anomaly'], test_size=0.2, random_state=42)
-    model = IsolationForest(contamination=0.05, random_state=42)
-    model.fit(X_train)
-    y_pred = model.predict(X_test)
-    y_pred = np.where(y_pred == 1, "Normal", "Congested")
-    
-    st.subheader("📈 **Congestion Prediction Results** 📉")
-    st.write("📊 **Confusion Matrix**:")
-    st.write(confusion_matrix(y_test, y_pred))
-    st.text(classification_report(y_test, y_pred))
-    
-    congestion_fig = px.pie(names=['Normal', 'Congested'], values=[np.sum(y_pred == 'Normal'), np.sum(y_pred == 'Congested')], title="🚦 Traffic Congestion Distribution 🌐")
-    st.plotly_chart(congestion_fig, use_container_width=True)
-
-# Main Execution
-if uploaded_file:
-    df = load_data(uploaded_file)
-    st.subheader("🔍 **Preview of Uploaded Data**")
+# Function to load and preprocess data
+def load_data(file):
+    df = pd.read_csv(file)
+    st.write("### 🔍 Sample Data")
     st.dataframe(df.head())
 
-    df, df_scaled = preprocess_data(df)
+    # Standardizing Data
+    scaler = StandardScaler()
+    df_scaled = pd.DataFrame(scaler.fit_transform(df.select_dtypes(include=np.number)), columns=df.select_dtypes(include=np.number).columns)
+
+    return df, df_scaled
+
+# Function to detect anomalies using Isolation Forest
+def detect_anomalies(df_scaled):
+    global df, anomaly_model, anomaly_detected
+
+    st.write("### 🚨 Running Anomaly Detection...")
+    anomaly_model = IsolationForest(contamination=0.1, random_state=42)
+    df['Anomaly'] = anomaly_model.fit_predict(df_scaled)
     
-    # Session state to store the 'Anomaly' column after anomaly detection
-    if st.button("🚨 **Run Anomaly Detection** 🚨"):
-        df = detect_anomalies(df, df_scaled)
-        st.session_state.df = df  # Save df to session state
-        display_results(df)
+    anomaly_detected = True  # Mark as detected
+
+    # Count anomalies and normal records
+    anomaly_count = (df['Anomaly'] == -1).sum()
+    normal_count = (df['Anomaly'] == 1).sum()
+
+    # Display results
+    st.markdown(f"🔴 **Total Anomalies Detected:** <span style='color:red;font-size:22px;font-weight:bold'>{anomaly_count}</span>", unsafe_allow_html=True)
+    st.markdown(f"✅ **Total Normal Records:** <span style='color:green;font-size:22px;font-weight:bold'>{normal_count}</span>", unsafe_allow_html=True)
+
+    return anomaly_count, normal_count
+
+# Function to visualize anomaly detection results
+def plot_anomalies(anomalies, normal_records):
+    categories = ["Anomalies", "Normal Records"]
+    values = [anomalies, normal_records]
+    colors = ["red", "blue"]
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    sns.barplot(x=categories, y=values, palette=colors, ax=ax)
+
+    ax.set_ylabel("Count", fontsize=14)
+    ax.set_title("Anomaly Detection Overview", fontsize=16, fontweight='bold')
     
-    if st.button("📊 **Predict Network Congestion** 📉"):
-        # Ensure Anomaly column is available in the session state
-        if 'df' in st.session_state and 'Anomaly' in st.session_state.df.columns:
-            congestion_prediction(df_scaled, st.session_state.df)
-        else:
-            st.error("Anomaly column is missing. Please run anomaly detection first.")
+    for i, v in enumerate(values):
+        ax.text(i, v + 5000, str(v), ha='center', fontsize=12, fontweight='bold', color='black')
+
+    st.pyplot(fig)
+
+# Function to predict congestion using Train-Test Split
+def congestion_prediction():
+    global df, df_scaled
+
+    if not anomaly_detected:
+        st.error("⚠️ Please run anomaly detection first!")
+        return
+
+    st.write("### 📊 Predicting Network Congestion...")
+    
+    try:
+        # Ensure 'Anomaly' column exists
+        if 'Anomaly' not in df.columns:
+            st.error("⚠️ 'Anomaly' column is missing. Please run anomaly detection first.")
+            return
+        
+        # Train-Test Split
+        X_train, X_test, y_train, y_test = train_test_split(df_scaled, df['Anomaly'], test_size=0.2, random_state=42)
+        
+        st.success("✅ Congestion Prediction Successful!")
+        st.write(f"Training Data: {X_train.shape[0]} rows")
+        st.write(f"Testing Data: {X_test.shape[0]} rows")
+
+    except Exception as e:
+        st.error(f"❌ Error in Prediction: {e}")
+
+# Main Content
+st.title("🛡️ AI-Powered Network Security Dashboard")
+st.markdown("Anomaly Detection and Congestion Prediction for Securing Networks")
+
+# Check if file is uploaded
+if uploaded_file is not None:
+    df, df_scaled = load_data(uploaded_file)
+
+    # Run Anomaly Detection
+    if st.button("🚨 Run Anomaly Detection"):
+        anomalies, normal_records = detect_anomalies(df_scaled)
+        plot_anomalies(anomalies, normal_records)
+
+    # Predict Congestion
+    if st.button("📊 Predict Network Congestion"):
+        congestion_prediction()
+else:
+    st.info("📂 Please upload a CSV file to proceed.")
+
