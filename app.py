@@ -54,6 +54,7 @@ st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/4/46/Network-ic
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
 
+
 # Load data function
 @st.cache_data
 def load_data(uploaded_file):
