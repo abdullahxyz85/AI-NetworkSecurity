@@ -7,7 +7,6 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 
-
 # Streamlit Page Configuration
 st.set_page_config(page_title="Network Anomaly Detection & Congestion Prediction", page_icon="📡", layout="wide")
 
@@ -54,15 +53,15 @@ st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Netw
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
 
-# Use Pandas for data loading
-@st.cache
+# Use Pandas for file loading and processing
+@st.cache_data
 def load_data(uploaded_file):
-    # Load the data using Pandas for performance
+    # Load the data using Pandas
     df = pd.read_csv(uploaded_file)
     return df
 
 # Preprocess data
-@st.cache
+@st.cache_data
 def preprocess_data(df):
     # Convert 'Time' to datetime and extract the hour
     df['Time'] = pd.to_datetime(df['Time'], unit='s')
@@ -80,7 +79,7 @@ def preprocess_data(df):
     return df, df_scaled
 
 # Anomaly Detection using Isolation Forest
-@st.cache
+@st.cache_resource
 def detect_anomalies(df, df_scaled):
     # Using Isolation Forest to detect anomalies
     model = IsolationForest(contamination=0.1, random_state=42)
@@ -110,7 +109,7 @@ def congestion_prediction(df_scaled, df):
     y_pred = np.where(y_pred == 1, "Normal", "Congested")
     
     st.subheader("📈 **Congestion Prediction Results** 📉")
-    st.write("📊 **Confusion Matrix**:")
+    st.write("📊 **Confusion Matrix**: ")
     st.write(confusion_matrix(y_test, y_pred))
     st.text(classification_report(y_test, y_pred))
     
