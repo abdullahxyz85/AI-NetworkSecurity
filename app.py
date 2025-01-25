@@ -48,7 +48,7 @@ st.sidebar.markdown("""
     - **Step 2**: Run **Anomaly Detection** to identify unusual patterns.
     - **Step 3**: Predict **Network Congestion** for traffic analysis.
 """)
-st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Network-icon.svg/1200px-Network-icon.svg.png", width=100)
+st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/4/46/Network-icon.svg", width=100)
 
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
