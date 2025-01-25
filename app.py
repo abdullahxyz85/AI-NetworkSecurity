@@ -10,138 +10,56 @@ from sklearn.metrics import classification_report, confusion_matrix
 # Streamlit Page Configuration
 st.set_page_config(page_title="Network Anomaly Detection & Congestion Prediction", page_icon="📡", layout="wide")
 
-# Custom Styling for Advanced UI
+# Custom Styling for UI Enhancements
 st.markdown("""
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f4f6f9;
-            color: #333333;
-        }
-        .stApp {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .reportview-container {
-            background-color: #f4f6f9;
-            padding: 0;
-        }
-        .css-1d391kg {
-            padding: 2rem;
-            width: 70%;
-        }
-        h1 {
-            font-size: 3rem;
-            color: #1e2a47;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 2rem;
-            letter-spacing: 1px;
-        }
-        h2 {
-            font-size: 2.2rem;
-            color: #3a4f78;
-            font-weight: bold;
-        }
-        .stButton button {
-            background-color: #007BFF;
-            color: white;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 12px 30px;
-            border-radius: 12px;
-            border: none;
-            box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.1);
-            transition: 0.3s ease;
-        }
-        .stButton button:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-        }
-        .stButton button:active {
-            transform: translateY(0);
-            box-shadow: 0px 5px 8px rgba(0, 0, 0, 0.1);
-        }
-        .stFileUploader {
-            margin-top: 2rem;
-            background-color: #ffffff;
-            padding: 1rem;
-            border-radius: 12px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .stAlert {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-top: 20px;
-            font-size: 1.1rem;
-        }
-        .sidebar .sidebar-content {
-            background-color: #283593;
-            color: #ffffff;
-            padding: 20px;
-            border-radius: 12px;
-        }
-        .stSelectbox div, .stTextInput div {
-            margin-bottom: 15px;
-        }
-        .stBarChart {
-            margin-top: 20px;
-            background-color: #ffffff;
+        .reportview-container { background: #f5f7fa; }
+        .css-1d391kg { padding: 2rem; }
+        h1 { color: #333366; font-size: 3rem; text-align: center; font-weight: bold; }
+        h2 { color: #1E3A8A; font-size: 2rem; font-weight: bold; }
+        .stButton button { 
+            background-color: #4CAF50; 
+            color: white; 
+            font-size: 16px; 
+            padding: 10px 20px;
             border-radius: 10px;
-            padding: 1rem;
-            box-shadow: 0px 8px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .stDataFrame {
-            margin-top: 2rem;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-            background-color: #ffffff;
+        .stButton button:hover { 
+            background-color: #45a049; 
+            transform: scale(1.05); 
+            transition: all 0.3s ease-in-out;
         }
-        .stAlert {
-            font-size: 1.1rem;
-        }
-        .stPlotlyChart {
-            background-color: #ffffff;
-            border-radius: 10px;
-            padding: 1rem;
-            box-shadow: 0px 8px 10px rgba(0, 0, 0, 0.15);
-        }
-        .stTextInput div {
-            margin-top: 1rem;
-        }
+        .sidebar .sidebar-content { background-color: #1E3A8A; color: white; padding: 20px; }
+        .stSelectbox div, .stTextInput div { margin-bottom: 20px; }
+        .stAlert { background-color: #f8d7da; color: #721c24; border-radius: 10px; padding: 10px; }
+        .stBarChart { margin-top: 20px; }
     </style>
 """, unsafe_allow_html=True)
 
 # App Title
 st.title("📡 **Network Anomaly Detection & Congestion Prediction** 🔍")
-st.write("""
-    **Step 1**: Upload your network traffic data.
-    **Step 2**: Run **Anomaly Detection** to identify unusual patterns.
-    **Step 3**: Predict **Network Congestion** based on traffic.
-""")
+st.write("Upload your network traffic data to detect anomalies and predict congestion patterns. 🚨📊")
+
+# Sidebar for Navigation
 st.sidebar.header("📑 **Navigation Panel**")
 st.sidebar.markdown("""
     - **Step 1**: Upload your network traffic data.
     - **Step 2**: Run **Anomaly Detection** to identify unusual patterns.
-    - **Step 3**: Predict **Network Congestion** based on traffic.
+    - **Step 3**: Predict **Network Congestion** for traffic analysis.
 """)
 st.sidebar.image("https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Network-icon.svg/1200px-Network-icon.svg.png", width=100)
 
-# File Uploader with Stylish Layout
+# File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
 
-# Load and preprocess functions
+# Load data function
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_csv(uploaded_file)
     return df
 
+# Preprocess data
 @st.cache_data
 def preprocess_data(df):
     df['Time'] = pd.to_datetime(df['Time'], unit='s')
@@ -153,7 +71,7 @@ def preprocess_data(df):
     df_scaled = scaler.fit_transform(df[features])
     return df, df_scaled
 
-# Anomaly Detection
+# Anomaly Detection function
 @st.cache_data
 def detect_anomalies(df, df_scaled):
     model = IsolationForest(contamination=0.1, random_state=42)
@@ -161,16 +79,16 @@ def detect_anomalies(df, df_scaled):
     df['Anomaly'] = df['Anomaly'].map({1: 'Normal', -1: 'Anomaly'})
     return df
 
-# Display results function
+# Display results with improved UI
 def display_results(df):
     st.write("### 🚨 **Anomaly Detection Results** 🚨")
-    st.dataframe(df.head())
+    st.write(df.head()) 
     anomaly_count = df['Anomaly'].value_counts()
     st.write("🛑 **Total Anomalies Detected**:", anomaly_count.get('Anomaly', 0))
     st.write("✅ **Total Normal Records**:", anomaly_count.get('Normal', 0))
     st.bar_chart(df['Anomaly'].value_counts(), use_container_width=True)
 
-# Congestion Prediction
+# Congestion Prediction function
 def congestion_prediction(df_scaled, df):
     if 'Anomaly' not in df.columns:
         st.error("Anomaly column is missing. Please run anomaly detection first.")
