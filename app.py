@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
@@ -41,7 +42,6 @@ st.markdown("""
 st.title("📡 **Network Anomaly Detection & Congestion Prediction** 🔍")
 st.write("Upload your network traffic data to detect anomalies and predict congestion patterns. 🚨📊")
 
-
 # Sidebar for Navigation
 st.sidebar.header("📑 **Navigation Panel**")
 st.sidebar.markdown("""
@@ -51,10 +51,8 @@ st.sidebar.markdown("""
 """)
 st.sidebar.image("https://cdn-icons-png.flaticon.com/512/4149/4149683.png", width=100)
 
-
 # File Uploader
 uploaded_file = st.file_uploader("📂 **Upload Network Traffic Data (CSV)**", type=["csv"])
-
 
 # Load data function
 @st.cache_data
@@ -89,7 +87,18 @@ def display_results(df):
     anomaly_count = df['Anomaly'].value_counts()
     st.write("🛑 **Total Anomalies Detected**:", anomaly_count.get('Anomaly', 0))
     st.write("✅ **Total Normal Records**:", anomaly_count.get('Normal', 0))
-    st.bar_chart(df['Anomaly'].value_counts(), use_container_width=True)
+    
+    # Enhanced Visualization
+    fig = px.histogram(df, x='Anomaly', color='Anomaly', title="📊 Anomaly Distribution", barmode='group')
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Scatter plot for anomalies
+    scatter_fig = px.scatter(df, x='Hour', y='Length', color='Anomaly', title="📈 Anomaly Detection Over Time")
+    st.plotly_chart(scatter_fig, use_container_width=True)
+    
+    # Pie Chart
+    pie_fig = px.pie(names=['Normal', 'Anomaly'], values=[anomaly_count.get('Normal', 0), anomaly_count.get('Anomaly', 0)], title="🛑 Anomaly vs Normal Records")
+    st.plotly_chart(pie_fig, use_container_width=True)
 
 # Congestion Prediction function
 def congestion_prediction(df_scaled, df):
@@ -119,14 +128,12 @@ if uploaded_file:
 
     df, df_scaled = preprocess_data(df)
     
-    # Session state to store the 'Anomaly' column after anomaly detection
     if st.button("🚨 **Run Anomaly Detection** 🚨"):
         df = detect_anomalies(df, df_scaled)
-        st.session_state.df = df  # Save df to session state
+        st.session_state.df = df
         display_results(df)
     
     if st.button("📊 **Predict Network Congestion** 📉"):
-        # Ensure Anomaly column is available in the session state
         if 'df' in st.session_state and 'Anomaly' in st.session_state.df.columns:
             congestion_prediction(df_scaled, st.session_state.df)
         else:
