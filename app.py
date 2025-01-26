@@ -120,6 +120,14 @@ def congestion_prediction(df_scaled, df):
     congestion_fig = px.pie(names=['Normal', 'Congested'], values=[np.sum(y_pred == 'Normal'), np.sum(y_pred == 'Congested')], title="🚦 Traffic Congestion Distribution 🌐")
     st.plotly_chart(congestion_fig, use_container_width=True)
 
+# Improved Error Message with Custom Styling for Missing Anomaly Column
+def show_error_message():
+    st.markdown("""
+        <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 10px; margin-top: 20px;">
+            <strong>🚨 Error:</strong> Anomaly column is missing. Please run <strong>anomaly detection</strong> first to generate the required data.
+        </div>
+    """, unsafe_allow_html=True)
+
 # Main Execution
 if uploaded_file:
     df = load_data(uploaded_file)
@@ -127,7 +135,7 @@ if uploaded_file:
     st.dataframe(df.head())
 
     df, df_scaled = preprocess_data(df)
-    
+
     if st.button("🚨 **Run Anomaly Detection** 🚨"):
         df = detect_anomalies(df, df_scaled)
         st.session_state.df = df
@@ -137,4 +145,4 @@ if uploaded_file:
         if 'df' in st.session_state and 'Anomaly' in st.session_state.df.columns:
             congestion_prediction(df_scaled, st.session_state.df)
         else:
-            st.error("Anomaly column is missing. Please run anomaly detection first.")
+            show_error_message()  # Display the enhanced error message
